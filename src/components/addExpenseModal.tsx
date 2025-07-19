@@ -23,10 +23,11 @@ interface Member {
 interface AddExpenseModalProps {
   isOpen: boolean
   onClose: () => void
+  onExpenseAdded: () => void
   groupMembers: Member[]
 }
 
-export default function AddExpenseModal({ isOpen, onClose, groupMembers }: AddExpenseModalProps) {
+export default function AddExpenseModal({ isOpen, onClose, onExpenseAdded, groupMembers }: AddExpenseModalProps) {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [totalAmount, setTotalAmount] = useState("")
@@ -120,6 +121,7 @@ export default function AddExpenseModal({ isOpen, onClose, groupMembers }: AddEx
       };
 
       await addExpense(groupId, payload);
+      onExpenseAdded();
 
     // Reset form and close
     setTitle("")

@@ -72,11 +72,26 @@ export default function GroupPage() {
   const { id } = useParams();
   const groupId = Number(id);
 
+  const fetchGroupData = async () => {
+    try {
+      const response = await axios.get(`http://localhost:8080/api/groups/${groupId}`);
+      setGroupData(response.data);
+    } catch (error) {
+      console.error("Error fetching data", error);
+    }
+  };
+
   useEffect(() => {
-    axios.get(`http://localhost:8080/api/groups/${groupId}`)
-    .then((response) => setGroupData(response.data))
-    .catch((error) => console.error("Error fetching data", error));
+    fetchGroupData();
   }, [groupId]);
+
+  const handleExpenseAdded = () => {
+    fetchGroupData();
+  };
+
+  const handleSettlementAdded = () => {
+    fetchGroupData();
+  };
 
   const group = groupData
 
@@ -292,10 +307,16 @@ export default function GroupPage() {
         </div>
       </div>
 
-      <AddExpenseModal isOpen={showAddExpense} onClose={() => setShowAddExpense(false)} groupMembers={group.members} />
+      <AddExpenseModal 
+        isOpen={showAddExpense} 
+        onClose={() => setShowAddExpense(false)} 
+        onExpenseAdded={handleExpenseAdded}
+        groupMembers={group.members} 
+      />
       <AddSettlementModal
         isOpen={showAddSettlement}
         onClose={() => setShowAddSettlement(false)}
+        onSettlementAdded={handleSettlementAdded}
         groupMembers={group.members}
       />
     </div>

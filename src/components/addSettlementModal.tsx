@@ -20,10 +20,11 @@ interface Member {
 interface AddSettlementModalProps {
   isOpen: boolean
   onClose: () => void
+  onSettlementAdded: () => void
   groupMembers: Member[]
 }
 
-export default function AddSettlementModal({ isOpen, onClose, groupMembers }: AddSettlementModalProps) {
+export default function AddSettlementModal({ isOpen, onClose, onSettlementAdded, groupMembers }: AddSettlementModalProps) {
   const [fromUserId, setFromUserId] = useState("")
   const [toUserId, setToUserId] = useState("")
   const [amount, setAmount] = useState("")
@@ -53,6 +54,7 @@ export default function AddSettlementModal({ isOpen, onClose, groupMembers }: Ad
           headers: { "Content-Type": "application/json" },
         });
         console.log("Settlement saved:", response.data);
+        onSettlementAdded();
       } catch (error: any) {
         console.error("Failed to save settlement:", error.response?.data || error.message);
       }
