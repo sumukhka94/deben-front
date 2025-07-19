@@ -10,6 +10,8 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
+import axios from "axios"
+import { useParams } from "react-router-dom"
 
 interface Member {
   id: number
@@ -33,6 +35,9 @@ export default function AddExpenseModal({ isOpen, onClose, groupMembers }: AddEx
   const [selectedSplitters, setSelectedSplitters] = useState<number[]>([])
   const [customSplits, setCustomSplits] = useState<{ [key: number]: number }>({})
   const [customAmounts, setCustomAmounts] = useState<{ [key: number]: number }>({})
+
+  const { id } = useParams();
+  const groupId = Number(id);
 
   if (!isOpen) return null
 
@@ -72,23 +77,49 @@ export default function AddExpenseModal({ isOpen, onClose, groupMembers }: AddEx
     (splitType === "percentage" && Math.abs(totalSplitPercentage - 100) < 0.01) ||
     (splitType === "amount" && Math.abs(totalSplitAmount - Number.parseFloat(totalAmount || "0")) < 0.01)
 
-  const handleSubmit = (e: React.FormEvent) => {
+    const addExpense = async (groupId: number, expenseData: any) => {
+        try {
+            const response = await axios.post(`http://localhost:8080/api/groups/${groupId}/expenses`, expenseData);
+            console.log("Expense added:", response.data);
+            return response.data;
+        } catch (err) {
+            console.error("Error adding expense:", err);
+        }
+    };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!title || !totalAmount || totalPaid !== Number.parseFloat(totalAmount) || !isValidSplit) {
       return
     }
 
-    // Here you would typically save the expense
-    console.log({
-      title,
-      description,
-      totalAmount: Number.parseFloat(totalAmount),
-      payers: selectedPayers,
-      splitters: selectedSplitters,
-      splitType,
-      customSplits: splitType === "percentage" ? customSplits : undefined,
-      customAmounts: splitType === "amount" ? customAmounts : undefined,
-    })
+    const payload = {
+        title,
+        description,
+        totalAmount: parseFloat(totalAmount),
+        payers: Object.entries(selectedPayers).map(([userId, amount]) => ({
+          userId: Number(userId),
+          amountPaid: amount,
+        })),
+        splitters: selectedSplitters,
+        splitType,
+        customSplits:
+          splitType === "percentage"
+            ? Object.entries(customSplits).map(([userId, percentage]) => ({
+                userId: Number(userId),
+                percentage: percentage,
+              }))
+            : undefined,
+        customAmounts:
+          splitType === "amount"
+            ? Object.entries(customAmounts).map(([userId, amount]) => ({
+                userId: Number(userId),
+                amount: amount,
+              }))
+            : undefined,
+      };
+
+      await addExpense(groupId, payload);
 
     // Reset form and close
     setTitle("")

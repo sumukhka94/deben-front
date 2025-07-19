@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import axios from "axios"
+import { useParams } from "react-router-dom"
 
 interface Member {
   id: number
@@ -27,25 +29,33 @@ export default function AddSettlementModal({ isOpen, onClose, groupMembers }: Ad
   const [amount, setAmount] = useState("")
   const [description, setDescription] = useState("")
 
+  const { id } = useParams();
+  const groupId = Number(id);
+
   if (!isOpen) return null
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!fromUserId || !toUserId || !amount || fromUserId === toUserId) {
       return
     }
 
-    const fromUser = groupMembers.find((m) => m.id === Number.parseInt(fromUserId))
-    const toUser = groupMembers.find((m) => m.id === Number.parseInt(toUserId))
-
-    // Here you would typically save the settlement
-    console.log({
-      from: { userId: Number.parseInt(fromUserId), name: fromUser?.name },
-      to: { userId: Number.parseInt(toUserId), name: toUser?.name },
-      amount: Number.parseFloat(amount),
-      description,
-      date: new Date().toISOString().split("T")[0],
-    })
+    const payload = {
+        fromUserId: Number.parseInt(fromUserId),
+        toUserId: Number.parseInt(toUserId),
+        amount: Number.parseFloat(amount),
+        description,
+        date: new Date().toISOString().split("T")[0],
+      };
+      
+      try {
+        const response = await axios.post(`http://localhost:8080/api/groups/${groupId}/expenses/settlements`, payload, {
+          headers: { "Content-Type": "application/json" },
+        });
+        console.log("Settlement saved:", response.data);
+      } catch (error: any) {
+        console.error("Failed to save settlement:", error.response?.data || error.message);
+      }
 
     // Reset form and close
     setFromUserId("")

@@ -2,50 +2,34 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Link } from "react-router-dom"
+import { useEffect, useState } from "react"
+import axios from "axios";
 
-// Mock data for groups
-const groups = [
-  {
-    id: 1,
-    name: "Weekend Trip",
-    description: "Expenses for our weekend getaway to the ",
-    members: [
-      { id: 1, name: "John Doe", avatar: "/placeholder.svg?height=32&width=32" },
-      { id: 2, name: "Jane Smith", avatar: "/placeholder.svg?height=32&width=32" },
-      { id: 3, name: "Mike Johnson", avatar: "/placeholder.svg?height=32&width=32" },
-      { id: 4, name: "Sarah Wilson", avatar: "/placeholder.svg?height=32&width=32" },
-    ],
-    totalExpenses: 1250.5,
-    expenseCount: 8,
-  },
-  {
-    id: 2,
-    name: "Office Lunch",
-    description: "Daily lunch expenses for the team",
-    members: [
-      { id: 1, name: "John Doe", avatar: "/placeholder.svg?height=32&width=32" },
-      { id: 5, name: "Alex Brown", avatar: "/placeholder.svg?height=32&width=32" },
-      { id: 6, name: "Emma Davis", avatar: "/placeholder.svg?height=32&width=32" },
-    ],
-    totalExpenses: 450.75,
-    expenseCount: 12,
-  },
-  {
-    id: 3,
-    name: "House Rent",
-    description: "Monthly rent and utilities for shared apartment",
-    members: [
-      { id: 2, name: "Jane Smith", avatar: "/placeholder.svg?height=32&width=32" },
-      { id: 3, name: "Mike Johnson", avatar: "/placeholder.svg?height=32&width=32" },
-      { id: 7, name: "Lisa Garcia", avatar: "/placeholder.svg?height=32&width=32" },
-    ],
-    totalExpenses: 2400.0,
-    expenseCount: 3,
-  },
+export interface Member {
+  id: number;
+  name: string;
+  avatar: string;
+}
 
-]
+export interface GroupSummary {
+  id: number;
+  name: string;
+  description: string;
+  members: Member[];
+  totalExpenses: number;
+  expenseCount: number;
+}
 
 export default function HomePage() {
+
+  const [groups,setGroups] = useState<GroupSummary[]>([]);
+
+  useEffect(() => {
+    axios.get("http://localhost:8080/home")
+    .then((response) => setGroups(response.data))
+    .catch((error) => console.error("Error fetching data", error));
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navigation */}

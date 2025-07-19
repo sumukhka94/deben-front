@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { ArrowLeft, Plus, ChevronDown, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,88 +8,77 @@ import { Separator } from "@/components/ui/separator"
 import AddExpenseModal from "@/components/addExpenseModal"
 import AddSettlementModal from "@/components/addSettlementModal"
 import { Link, useParams } from "react-router-dom"
+import axios from "axios"
 
-// Mock data for group details
-const groupData = {
-  1: {
-    id: 1,
-    name: "Weekend Trip",
-    description: "Expenses for our weekend getaway to the mountains",
-    members: [
-      { id: 1, name: "John Doe", avatar: "/placeholder.svg?height=40&width=40", balance: -125.5 },
-      { id: 2, name: "Jane Smith", avatar: "/placeholder.svg?height=40&width=40", balance: 75.25 },
-      { id: 3, name: "Mike Johnson", avatar: "/placeholder.svg?height=40&width=40", balance: 50.25 },
-      { id: 4, name: "Sarah Wilson", avatar: "/placeholder.svg?height=40&width=40", balance: 0 },
-    ],
-    expenses: [
-      {
-        id: 1,
-        title: "Hotel Booking",
-        description: "Two nights at Mountain View Resort",
-        date: "2024-01-15",
-        totalAmount: 480.0,
-        paidBy: [{ userId: 1, amount: 480.0 }],
-        splitAmong: [
-          { userId: 1, share: 120.0, paid: 480.0, owes: 0 },
-          { userId: 2, share: 120.0, paid: 0, owes: 120.0 },
-          { userId: 3, share: 120.0, paid: 0, owes: 120.0 },
-          { userId: 4, share: 120.0, paid: 0, owes: 120.0 },
-        ],
-      },
-      {
-        id: 2,
-        title: "Groceries",
-        description: "Food and drinks for the trip",
-        date: "2024-01-16",
-        totalAmount: 150.75,
-        paidBy: [
-          { userId: 2, amount: 100.0 },
-          { userId: 3, amount: 50.75 },
-        ],
-        splitAmong: [
-          { userId: 1, share: 37.69, paid: 0, owes: 37.69 },
-          { userId: 2, share: 37.69, paid: 100.0, owes: 0 },
-          { userId: 3, share: 37.69, paid: 50.75, owes: 0 },
-          { userId: 4, share: 37.68, paid: 0, owes: 37.68 },
-        ],
-      },
-      {
-        id: 3,
-        title: "Gas",
-        description: "Fuel for the road trip",
-        date: "2024-01-16",
-        totalAmount: 85.5,
-        paidBy: [{ userId: 4, amount: 85.5 }],
-        splitAmong: [
-          { userId: 1, share: 21.38, paid: 0, owes: 21.38 },
-          { userId: 2, share: 21.38, paid: 0, owes: 21.38 },
-          { userId: 3, share: 21.37, paid: 0, owes: 21.37 },
-          { userId: 4, share: 21.37, paid: 85.5, owes: 0 },
-        ],
-      },
-    ],
-    settlements: [
-      {
-        id: 1,
-        date: "2024-01-17",
-        from: { userId: 2, name: "Jane Smith" },
-        to: { userId: 1, name: "John Doe" },
-        amount: 45.0,
-        description: "Settlement for hotel booking",
-      },
-    ],
-  },
-}
+export interface GroupDetails {
+    id: number;
+    name: string;
+    description: string;
+    members: Member[];
+    expenses: Expense[];
+    settlements: Settlement[];
+  }
+  
+  export interface Member {
+    id: number;
+    name: string;
+    avatar: string;
+    balance: number;
+  }
+  
+  export interface Expense {
+    id: number;
+    title: string;
+    description: string;
+    date: string;          
+    totalAmount: number;
+    paidBy: Payer[];
+    splitAmong: Split[];
+  }
+  
+  export interface Payer {
+    userId: number;
+    amount: number;
+  }
+  
+  export interface Split {
+    userId: number;
+    share: number;
+    paid: number;
+    owes: number;
+  }
+  
+  export interface Settlement {
+    id: number;
+    date: string;
+    from: SettlementUser;
+    to: SettlementUser;
+    amount: number;
+    description: string;
+  }
+  
+  export interface SettlementUser {
+    userId: number;
+    name: string;
+  }
+  
 
 export default function GroupPage() {
   const [expandedExpense, setExpandedExpense] = useState<number | null>(null)
   const [showAddExpense, setShowAddExpense] = useState(false)
   const [showAddSettlement, setShowAddSettlement] = useState(false)
+  const [groupData, setGroupData] = useState<GroupDetails>()
 
   const { id } = useParams();
   const groupId = Number(id);
 
-  const group = groupData[groupId as keyof typeof groupData]
+  useEffect(() => {
+    axios.get(`http://localhost:8080/api/groups/${groupId}`)
+    .then((response) => setGroupData(response.data))
+    .catch((error) => console.error("Error fetching data", error));
+  }, [groupId]);
+
+  const group = groupData
 
   if (!group) {
     return <div>Group not found</div>
